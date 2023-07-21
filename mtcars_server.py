@@ -32,13 +32,24 @@ def get_mtcars_server_functions(input, output, session):
     reactive_df = reactive.Value()
 
     @reactive.Effect
-    @reactive.event(input.MTCARS_MPG_RANGE)
+    @reactive.event(input.MTCARS_MPG_RANGE,input.MTCARS_HP_RANGE,input.MTCARS_MAX_HP,)
     def _():
         df = original_df.copy()
 
         input_range = input.MTCARS_MPG_RANGE()
         input_min = input_range[0]
         input_max = input_range[1]
+        filtered_df = (df["mpg"] >= input_min) & (df["mpg"] <= input_max)
+        # df = df[filtered_df]
+
+        input_range2 = input.MTCARS_HP_RANGE()
+        input_min2 = input_range2[0]
+        input_max2 = input_range2[1]
+        filtered_df2 = (df["hp"] >= input_min2) & (df["hp"] <= input_max2)
+        # df = df[filtered_df2]
+
+        maxhp = df['hp'] <= input.MTCARS_MAX_HP()
+        df = df[filtered_df & filtered_df2 & maxhp]
 
         """
         Filter the dataframe to just those greater than or equal to the min
@@ -48,10 +59,10 @@ def get_mtcars_server_functions(input, output, session):
         You must be familiar with the dataset to know the column names.
         """
 
-        filtered_df = df[(df["mpg"] >= input_min) & (df["mpg"] <= input_max)]
+        
 
         # Set the reactive value
-        reactive_df.set(filtered_df)
+        reactive_df.set(df)
 
     @output
     @render.text
